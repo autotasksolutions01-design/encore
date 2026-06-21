@@ -83,14 +83,14 @@ export function OnboardingWizard({ userId }: { userId: string }) {
   // Restore draft from Zustand
   useEffect(() => {
     if (draft && !data.displayName) {
-      const restored = {
-        displayName: draft.displayName || "",
-        instruments: draft.instruments || [],
-        genres: draft.genres || [],
-        skillLevel: draft.skillLevel || "",
-        city: draft.city || "",
-        bio: draft.bio || "",
-        lookingFor: draft.lookingFor || [],
+      const restored: StepData = {
+        displayName: (draft.displayName as string) || "",
+        instruments: (draft.instruments as string[]) || [],
+        genres: (draft.genres as string[]) || [],
+        skillLevel: (draft.skillLevel as StepData["skillLevel"]) || "",
+        city: (draft.city as string) || "",
+        bio: (draft.bio as string) || "",
+        lookingFor: (draft.lookingFor as StepData["lookingFor"]) || [],
       };
       setData(restored);
     }
@@ -100,7 +100,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
   // Auto-save to Zustand
   useEffect(() => {
     if (data.displayName || data.instruments.length > 0) {
-      setDraft(data);
+      setDraft(data as unknown as Parameters<typeof setDraft>[0]);
     }
   }, [data, setDraft]);
 

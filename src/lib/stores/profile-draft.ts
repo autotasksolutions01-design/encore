@@ -2,10 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ProfileInput } from "@/lib/validations/profile";
 
+type ProfileDraftData = Partial<ProfileInput> & {
+  lookingFor?: { instrument?: string; genre?: string; role: string }[];
+};
+
 interface ProfileDraftState {
-  draft: Partial<ProfileInput> | null;
+  draft: ProfileDraftData | null;
   lastSaved: string | null;
-  setDraft: (draft: Partial<ProfileInput>) => void;
+  setDraft: (draft: ProfileDraftData) => void;
   clearDraft: () => void;
   hasDraft: () => boolean;
 }
@@ -35,3 +39,4 @@ const useProfileDraftStore = create<ProfileDraftState>()(
 );
 
 export { useProfileDraftStore };
+export type { ProfileDraftData };

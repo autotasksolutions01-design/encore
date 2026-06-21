@@ -49,7 +49,7 @@ export default function ProfileEditPage() {
     visibility: "public" as string,
   });
 
-  const autoSaveTimer = useRef<ReturnType<typeof setInterval>>();
+  const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load existing profile
   useEffect(() => {
