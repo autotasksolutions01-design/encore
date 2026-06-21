@@ -20,5 +20,20 @@
     "band": "Formar banda",
     "session": "Sesionista",
     "collab": "Colaborar"
-  }
+  },
+  "editTitle": "Editar perfil",
+  "publicProfile": "Perfil público",
+  "draftRestored": "Borrador restaurado",
+  "draftSaved": "Borrador guardado",
+  "lastSaved": "Guardado",
+  "autoSave": "Se guarda automáticamente",
+  "expressInterest": "Quiero conectar",
+  "connectionsOnly": "Este perfil es visible solo para conexiones",
+  "noProfileFound": "Perfil no encontrado",
+  "noProfileYet": "Todavía no creaste tu perfil",
+  "createProfile": "Crear perfil",
+  "avatarPlaceholder": "Sin foto",
+  "instrumentsCount": "{{count}} instrumentos",
+  "genresCount": "{{count}} géneros",
+  "andMore": "+{{count}} más"
 }

@@ -20,5 +20,20 @@
     "band": "Start a band",
     "session": "Session musician",
     "collab": "Collaborate"
-  }
+  },
+  "editTitle": "Edit profile",
+  "publicProfile": "Public profile",
+  "draftRestored": "Draft restored",
+  "draftSaved": "Draft saved",
+  "lastSaved": "Saved",
+  "autoSave": "Auto-saves",
+  "expressInterest": "Express interest",
+  "connectionsOnly": "This profile is only visible to connections",
+  "noProfileFound": "Profile not found",
+  "noProfileYet": "You haven't created your profile yet",
+  "createProfile": "Create profile",
+  "avatarPlaceholder": "No photo",
+  "instrumentsCount": "{{count}} instruments",
+  "genresCount": "{{count}} genres",
+  "andMore": "+{{count}} more"
 }
