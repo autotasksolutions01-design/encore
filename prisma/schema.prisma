@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SkillLevel {
+  beginner
+  intermediate
+  advanced
+  pro
+}
+
+enum Visibility {
+  public
+  connections
+}
+
+enum CollabRole {
+  jam
+  band
+  session
+  collab
+}
+
+enum ConnectionStatus {
+  pending
+  accepted
+  declined
+}
+
+enum MessageStatus {
+  sent
+  delivered
+  read
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  resolved
+}
+
+enum JamStatus {
+  active
+  cancelled
+  expired
+}
+
+enum JamResponseType {
+  interested
+  going
+}
+
+model User {
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  name                String?
+  avatarUrl           String?
+  authProvider        String
+  onboardingCompleted Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  profile             Profile?
+  conversationsA      Conversation[] @relation("ParticipantA")
+  conversationsB      Conversation[] @relation("ParticipantB")
+  sentMessages        Message[]     @relation("Sender")
+  blocks             Block[]        @relation("Blocker")
+  blockedBy          Block[]        @relation("Blocked")
+  reports            Report[]       @relation("Reporter")
+  jamResponses       JamResponse[]
+}
+
+model Profile {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  displayName String
+  bio         String?
+  skillLevel  SkillLevel
+  city        String
+  lat         Float
+  lng         Float
+  avatarKey   String?
+  visibility  Visibility   @default(public)
+  publishedAt DateTime?
+
+  instruments  ProfileInstrument[]
+  genres       ProfileGenre[]
+  lookingFor   LookingFor[]
+  audioClips   AudioClip[]
+  connectionsA Connection[]       @relation("Requester")
+  connectionsB Connection[]       @relation("Receiver")
+  jamSessions  JamSession[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lat, lng])
+  @@index([skillLevel])
+}
+
+model ProfileInstrument {
+  id         String  @id @default(cuid())
+  profileId  String
+  instrument String
+  profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, instrument])
+}
+
+model ProfileGenre {
+  id        String  @id @default(cuid())
+  profileId String
+  genre     String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, genre])
+}
+
+model LookingFor {
+  id         String     @id @default(cuid())
+  profileId  String
+  instrument String?
+  genre      String?
+  role       CollabRole
+  profile    Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model AudioClip {
+  id            String        @id @default(cuid())
+  profileId     String
+  title         String
+  originalKey   String
+  transcodedKey String
+  waveformJson  Json?
+  duration      Float?
+  uploadedAt    DateTime      @default(now())
+  profile       Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  comments      ClipComment[]
+
+  @@index([profileId])
+}
+
+model ClipComment {
+  id        String    @id @default(cuid())
+  clipId    String
+  authorId  String
+  text      String
+  createdAt DateTime  @default(now())
+  clip      AudioClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      ConnectionStatus @default(pending)
+  createdAt   DateTime         @default(now())
+  requester   Profile          @relation("Requester", fields: [requesterId], references: [id])
+  receiver    Profile          @relation("Receiver", fields: [receiverId], references: [id])
+
+  @@unique([requesterId, receiverId])
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  participantA  String
+  participantB  String
+  lastMessageAt DateTime @default(now())
+  messages      Message[]
+
+  participantAUser User @relation("ParticipantA", fields: [participantA], references: [id])
+  participantBUser User @relation("ParticipantB", fields: [participantB], references: [id])
+
+  @@unique([participantA, participantB])
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  conversationId  String
+  senderId        String
+  text            String
+  isIntroTemplate Boolean       @default(false)
+  status          MessageStatus @default(sent)
+  createdAt       DateTime      @default(now())
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User          @relation("Sender", fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model Block {
+  id            String   @id @default(cuid())
+  userId        String
+  blockedUserId String
+  createdAt     DateTime @default(now())
+  user          User     @relation("Blocker", fields: [userId], references: [id])
+  blockedUser   User     @relation("Blocked", fields: [blockedUserId], references: [id])
+
+  @@unique([userId, blockedUserId])
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  messageId  String?
+  jamId      String?
+  reason     String
+  status     ReportStatus @default(pending)
+  createdAt  DateTime     @default(now())
+  reporter   User         @relation("Reporter", fields: [reporterId], references: [id])
+}
+
+model JamSession {
+  id           String       @id @default(cuid())
+  creatorId    String
+  title        String
+  genre        String
+  dateTime     DateTime
+  lat          Float
+  lng          Float
+  locationName String
+  description  String?
+  status       JamStatus    @default(active)
+  createdAt    DateTime     @default(now())
+  creator      Profile      @relation(fields: [creatorId], references: [id])
+  responses    JamResponse[]
+
+  @@index([dateTime, status])
+  @@index([lat, lng])
+}
+
+model JamResponse {
+  id        String         @id @default(cuid())
+  jamId     String
+  userId    String
+  response  JamResponseType
+  createdAt DateTime       @default(now())
+  jam       JamSession     @relation(fields: [jamId], references: [id], onDelete: Cascade)
+  responder User           @relation(fields: [userId], references: [id])
+
+  @@unique([jamId, userId])
+}
