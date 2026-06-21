@@ -132,6 +132,8 @@ export async function transcodeAudioWasm(
 export async function resolveFfmpegPath(): Promise<string> {
   try {
     // Try ffmpeg-static first
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore — ffmpeg-static is optional, may not be installed
     const ffmpegStatic = await import("ffmpeg-static");
     if (ffmpegStatic.default) {
       return ffmpegStatic.default as string;

@@ -86,17 +86,10 @@ export async function POST(request: NextRequest) {
       throw new Error("Empty response body from R2");
     }
 
-    // Write stream to temp file
-    const chunks: Uint8Array[] = [];
-    const reader = response.Body as unknown as ReadableStream<Uint8Array>;
-    const asyncIterable = reader[Symbol.asyncIterator]
-      ? reader
-      : (function* () {
-          // Fallback for Node.js Readable
-        })();
-
-    // Use Node.js buffer-based approach for S3 GetObject
-    const bodyBuffer = await new Response(response.Body as ReadableStream).arrayBuffer();
+    // Download object body from R2 into temp file
+    const bodyBuffer = await new Response(
+      response.Body as ReadableStream,
+    ).arrayBuffer();
     await fs.writeFile(tmpInput, new Uint8Array(bodyBuffer));
 
     // Transcode
