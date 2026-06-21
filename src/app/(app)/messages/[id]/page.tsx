@@ -71,24 +71,15 @@ export default function MessageThreadPage() {
           }
         }
 
-        // Create conversation to get introTemplate
+        // Fetch intro template from the dedicated conversation detail endpoint
         try {
-          // Try to find the connection for this conversation
-          const conversationsRes = await fetch("/api/conversations");
-          if (conversationsRes.ok) {
-            const allData = await conversationsRes.json();
-            const convData = allData.conversations.find(
-              (c: { id: string }) => c.id === conversationId,
-            );
-
-            // If this is a fresh conversation (no messages), fetch intro template
-            // by POSTing to /api/conversations with the first connection found
-            if (convData && !convData.lastMessage) {
-              // For existing conversations, we can't easily get the connection ID
-              // from the conversation alone. Use a simpler approach:
-              // Check if there are no messages yet, then the intro template
-              // would have been provided when creating the conversation.
-              // We'll let the MessageThread component handle this via its introTemplate prop.
+          const detailRes = await fetch(
+            `/api/conversations/${conversationId}`,
+          );
+          if (detailRes.ok) {
+            const detailData = await detailRes.json();
+            if (detailData.introTemplate?.text) {
+              setIntroTemplate(detailData.introTemplate.text);
             }
           }
         } catch {
