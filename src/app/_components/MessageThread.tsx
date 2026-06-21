@@ -148,7 +148,12 @@ export function MessageThread({
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-8rem)]">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+        role="log"
+        aria-live="polite"
+        aria-label={t("messages.area", "Área de mensajes")}
+      >
         {messages.length === 0 && !introTemplate && (
           <div className="text-center py-12">
             <p className="text-slate-500 text-sm">
@@ -192,6 +197,7 @@ export function MessageThread({
             <button
               onClick={() => setError(null)}
               className="ml-2 underline"
+              aria-label="Cerrar error"
             >
               {t("close", "Cerrar")}
             </button>
@@ -204,12 +210,14 @@ export function MessageThread({
             onKeyDown={handleKeyDown}
             placeholder={t("placeholder")}
             rows={2}
-            className="flex-1 bg-slate-800 text-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-slate-500"
             maxLength={1000}
+            aria-label={t("messageInput", "Escribí un mensaje")}
+            className="flex-1 bg-slate-800 text-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-slate-500"
           />
           <button
             onClick={handleSend}
             disabled={!text.trim() || sending}
+            aria-label={t("send", "Enviar mensaje")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors self-end",
               text.trim() && !sending

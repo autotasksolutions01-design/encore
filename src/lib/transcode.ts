@@ -90,8 +90,10 @@ export async function transcodeAudio(
   const baseName = path.basename(inputPath, path.extname(inputPath));
   const mp3Path = path.join(outputDir, `${baseName}.mp3`);
 
+  const ffmpegPath = await resolveFfmpegPath();
+
   // Transcode to 128kbps MP3 mono
-  await execFileAsync("ffmpeg", [
+  await execFileAsync(ffmpegPath, [
     "-i", inputPath,
     "-codec:a", "libmp3lame",
     "-b:a", "128k",

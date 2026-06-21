@@ -1,4 +1,12 @@
 import type { NextConfig } from "next";
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  cacheOnNavigation: true,
+  disable: process.env.NODE_ENV !== "production",
+});
 
 const nextConfig: NextConfig = {
   images: {
@@ -20,7 +28,7 @@ const nextConfig: NextConfig = {
         {
           key: "Content-Security-Policy",
           value:
-            "default-src 'self'; media-src 'self' https://*.r2.dev https://*.r2.cloudflarestorage.com; img-src 'self' data: https://*.r2.dev https://*.r2.cloudflarestorage.com https://lh3.googleusercontent.com; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; frame-src 'self'",
+            "default-src 'self'; media-src 'self' https://*.r2.dev https://*.r2.cloudflarestorage.com; img-src 'self' data: https://*.r2.dev https://*.r2.cloudflarestorage.com https://lh3.googleusercontent.com; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; frame-src 'self'; worker-src 'self'",
         },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "X-Frame-Options", value: "DENY" },
@@ -34,4 +42,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

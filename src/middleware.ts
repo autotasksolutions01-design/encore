@@ -40,8 +40,15 @@ export async function middleware(request: NextRequest) {
   }
 
   const isApiRoute = pathname.startsWith("/api/");
+  const isAuthRoute = pathname.startsWith("/api/auth/");
+  const isCronRoute = pathname.startsWith("/api/cron/");
   const isAppRoute =
     pathname.startsWith("/es/app") || pathname.startsWith("/en/app");
+
+  // Skip rate limiting for NextAuth internal routes and Vercel Cron jobs
+  if (isAuthRoute || isCronRoute) {
+    return NextResponse.next();
+  }
 
   // Auth guard for app routes only (APIs handle their own auth)
   if (isAppRoute) {

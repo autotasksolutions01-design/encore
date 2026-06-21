@@ -6,7 +6,7 @@ describe("clipUploadSchema", () => {
     const result = clipUploadSchema.safeParse({
       title: "Mi solo",
       fileSize: 3 * 1024 * 1024,
-      contentType: "audio/mp3",
+      contentType: "audio/mpeg",
       fileName: "solo.mp3",
     });
     expect(result.success).toBe(true);
@@ -16,7 +16,7 @@ describe("clipUploadSchema", () => {
     const result = clipUploadSchema.safeParse({
       title: "Big file",
       fileSize: 6 * 1024 * 1024,
-      contentType: "audio/mp3",
+      contentType: "audio/mpeg",
       fileName: "big.mp3",
     });
     expect(result.success).toBe(false);
@@ -36,7 +36,7 @@ describe("clipUploadSchema", () => {
     const result = clipUploadSchema.safeParse({
       title: "",
       fileSize: 1024,
-      contentType: "audio/mp3",
+      contentType: "audio/mpeg",
       fileName: "track.mp3",
     });
     expect(result.success).toBe(false);

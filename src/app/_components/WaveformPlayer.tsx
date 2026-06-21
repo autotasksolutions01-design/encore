@@ -212,7 +212,11 @@ export function WaveformPlayer({
   const displayDuration = durationRef.current || duration || 0;
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+    <div
+      className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3"
+      role="region"
+      aria-label={`Reproductor de audio: ${title}`}
+    >
       {/* Title */}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium text-white truncate flex-1 mr-2">
@@ -221,6 +225,17 @@ export function WaveformPlayer({
         <span className="text-xs text-slate-500 tabular-nums shrink-0">
           {formatTime(currentTime)} / {formatTime(displayDuration)}
         </span>
+      </div>
+
+      {/* Live region for playback state announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {isLoading
+          ? "Cargando audio"
+          : loadError
+            ? "Error al cargar audio"
+            : isPlaying
+              ? "Reproduciendo"
+              : "Pausado"}
       </div>
 
       {/* Waveform canvas */}

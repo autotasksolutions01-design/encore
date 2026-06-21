@@ -10,9 +10,18 @@ export const clipUploadSchema = z.object({
     .max(5 * 1024 * 1024, { error: "File must be under 5MB" }),
   contentType: z
     .string()
-    .refine((val) => val.startsWith("audio/"), {
-      message: "File must be an audio file",
-    }),
+    .refine(
+      (val) =>
+        val === "audio/mpeg" ||
+        val === "audio/mp3" ||
+        val === "audio/wav" ||
+        val === "audio/wave" ||
+        val === "audio/x-wav" ||
+        val === "audio/flac" ||
+        val === "audio/aac" ||
+        val === "audio/x-m4a",
+      { message: "Only MP3, WAV, FLAC, and AAC files are supported" },
+    ),
   fileName: z.string().min(1),
 });
 
