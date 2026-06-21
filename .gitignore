@@ -40,3 +40,4 @@ yarn-error.log*
 
 # atl
 .atl/
+next-env.d.ts
