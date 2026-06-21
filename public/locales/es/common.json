@@ -24,6 +24,11 @@
     "publish": "Publicar",
     "send": "Enviar",
     "search": "Buscar",
-    "loadMore": "Cargar más"
+    "loadMore": "Cargar más",
+    "back": "Volver",
+    "next": "Siguiente",
+    "finish": "Terminar",
+    "close": "Cerrar",
+    "confirm": "Confirmar"
   }
 }

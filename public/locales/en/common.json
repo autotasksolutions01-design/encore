@@ -24,6 +24,11 @@
     "publish": "Publish",
     "send": "Send",
     "search": "Search",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "close": "Close",
+    "confirm": "Confirm"
   }
 }

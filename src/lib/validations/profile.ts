@@ -27,6 +27,11 @@ export const profileSchema = z.object({
   visibility: z.enum(["public", "connections"]).default("public"),
 });
 
+export const profileCreateSchema = profileSchema.extend({
+  lat: z.number().min(-90).max(90).default(-34.6037),
+  lng: z.number().min(-180).max(180).default(-58.3816),
+});
+
 export const profileUpdateSchema = profileSchema.partial();
 
 export const lookingForSchema = z.object({
