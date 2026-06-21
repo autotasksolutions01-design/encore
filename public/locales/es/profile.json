@@ -1,0 +1,24 @@
+{
+  "displayName": "Nombre artístico",
+  "instruments": "Instrumentos",
+  "genres": "Géneros",
+  "skillLevel": "Nivel",
+  "city": "Ciudad",
+  "bio": "Bio",
+  "lookingFor": "Estoy buscando",
+  "visibility": "Visibilidad",
+  "visibilityPublic": "Público",
+  "visibilityConnections": "Solo conexiones",
+  "skill": {
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado",
+    "pro": "Profesional"
+  },
+  "role": {
+    "jam": "Jammear",
+    "band": "Formar banda",
+    "session": "Sesionista",
+    "collab": "Colaborar"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Mensajes",
+  "noConversations": "No tenés conversaciones todavía",
+  "startConversation": "Conectá con un músico para empezar a chatear",
+  "introTemplate": "Hola, soy {{displayName}}. Toco {{instruments}}. Me gusta {{genres}}. ¡Conectemos!",
+  "placeholder": "Escribí un mensaje...",
+  "status": {
+    "sent": "Enviado",
+    "delivered": "Entregado",
+    "read": "Leído"
+  },
+  "blocked": "No podés enviar mensajes a este usuario",
+  "report": "Reportar mensaje",
+  "reportReason": "Motivo",
+  "reportSubmitted": "Reporte enviado. Gracias."
+}

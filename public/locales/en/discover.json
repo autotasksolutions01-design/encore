@@ -1,0 +1,17 @@
+{
+  "title": "Discover musicians",
+  "filters": {
+    "instrument": "Instrument",
+    "genre": "Genre",
+    "location": "Location",
+    "radius": "Radius (km)",
+    "skill": "Skill level",
+    "clearFilters": "Clear filters"
+  },
+  "results": {
+    "found": "{{count}} musician found",
+    "found_plural": "{{count}} musicians found",
+    "none": "No musicians found",
+    "broaden": "Try broadening your filters"
+  }
+}

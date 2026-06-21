@@ -1,0 +1,29 @@
+{
+  "app": {
+    "name": "Encore",
+    "tagline": "Connect with musicians. Discover. Play.",
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "notFound": "Page not found",
+    "backToHome": "Back to home"
+  },
+  "nav": {
+    "discover": "Discover",
+    "profile": "Profile",
+    "messages": "Messages",
+    "connections": "Connections",
+    "jams": "Jams",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "publish": "Publish",
+    "send": "Send",
+    "search": "Search",
+    "loadMore": "Load more"
+  }
+}

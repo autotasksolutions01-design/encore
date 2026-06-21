@@ -1,0 +1,17 @@
+{
+  "title": "Descubrí músicos",
+  "filters": {
+    "instrument": "Instrumento",
+    "genre": "Género",
+    "location": "Ubicación",
+    "radius": "Radio (km)",
+    "skill": "Nivel",
+    "clearFilters": "Limpiar filtros"
+  },
+  "results": {
+    "found": "{{count}} músico encontrado",
+    "found_plural": "{{count}} músicos encontrados",
+    "none": "No se encontraron músicos",
+    "broaden": "Probá ampliando los filtros"
+  }
+}

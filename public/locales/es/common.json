@@ -1,0 +1,29 @@
+{
+  "app": {
+    "name": "Encore",
+    "tagline": "Conectá con músicos. Descubrí. Tocá.",
+    "loading": "Cargando...",
+    "error": "Algo salió mal. Intentá de nuevo.",
+    "notFound": "Página no encontrada",
+    "backToHome": "Volver al inicio"
+  },
+  "nav": {
+    "discover": "Descubrí",
+    "profile": "Perfil",
+    "messages": "Mensajes",
+    "connections": "Conexiones",
+    "jams": "Jams",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "publish": "Publicar",
+    "send": "Enviar",
+    "search": "Buscar",
+    "loadMore": "Cargar más"
+  }
+}

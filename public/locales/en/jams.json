@@ -1,0 +1,25 @@
+{
+  "title": "Jams",
+  "create": "Create jam",
+  "edit": "Edit jam",
+  "cancel": "Cancel jam",
+  "fields": {
+    "title": "Title",
+    "genre": "Genre",
+    "dateTime": "Date & time",
+    "location": "Location",
+    "description": "Description"
+  },
+  "status": {
+    "active": "Active",
+    "cancelled": "Cancelled",
+    "expired": "Expired"
+  },
+  "responses": {
+    "interested": "Interested",
+    "going": "Going",
+    "count": "{{count}} response",
+    "count_plural": "{{count}} responses"
+  },
+  "limit": "Max 10 active jams per user"
+}
