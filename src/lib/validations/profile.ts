@@ -6,10 +6,9 @@ export const profileSchema = z.object({
     .min(1, { error: "Display name is required" })
     .max(100, { error: "Display name must be at most 100 characters" }),
   bio: z
-    .string()
-    .max(500, { error: "Bio must be at most 500 characters" })
-    .nullable()
-    .optional(),
+    .string({ error: "Bio is required" })
+    .min(1, { error: "Bio is required" })
+    .max(500, { error: "Bio must be at most 500 characters" }),
   skillLevel: z.enum(["beginner", "intermediate", "advanced", "pro"], {
     error: "Skill level is required",
   }),

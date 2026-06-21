@@ -123,6 +123,7 @@ describe("Profile CRUD API", () => {
           method: "POST",
           body: JSON.stringify({
             displayName: "Juan Guitar",
+            bio: "Guitarist looking for a band.",
             skillLevel: "advanced",
             city: "Buenos Aires",
             lat: -34.6037,
@@ -150,6 +151,7 @@ describe("Profile CRUD API", () => {
           method: "POST",
           body: JSON.stringify({
             displayName: "Juan Guitar",
+            bio: "Rock and blues guitarist from Buenos Aires.",
             skillLevel: "advanced",
             city: "Buenos Aires",
             lat: -34.6037,

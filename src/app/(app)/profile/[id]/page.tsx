@@ -72,17 +72,26 @@ export default async function ProfilePage({
   const isPublic = profile.visibility === "public";
 
   // Check if connected
+  // session.user.id is the User model ID, but Connection.requesterId/receiverId
+  // reference Profile.id — they are different records. Look up the current user's
+  // Profile first to get the correct CUID for the Connection query.
   let isConnected = false;
   if (!isOwner && !isPublic && session?.user?.id) {
-    const connection = await prisma.connection.findFirst({
-      where: {
-        OR: [
-          { requesterId: session.user.id, receiverId: profile.id, status: "accepted" },
-          { requesterId: profile.id, receiverId: session.user.id, status: "accepted" },
-        ],
-      },
+    const currentProfile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
     });
-    isConnected = connection !== null;
+    if (currentProfile) {
+      const connection = await prisma.connection.findFirst({
+        where: {
+          OR: [
+            { requesterId: currentProfile.id, receiverId: profile.id, status: "accepted" },
+            { requesterId: profile.id, receiverId: currentProfile.id, status: "accepted" },
+          ],
+        },
+      });
+      isConnected = !!connection;
+    }
   }
 
   const canView = isOwner || isPublic || isConnected;

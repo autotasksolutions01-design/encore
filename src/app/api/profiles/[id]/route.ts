@@ -49,18 +49,28 @@ export async function GET(
   // Visibility guard
   const isOwner = session?.user?.id === profile.userId;
   const isPublic = profile.visibility === "public";
-  const isConnected =
-    isOwner ||
-    (session?.user?.id
-      ? await prisma.connection.findFirst({
-          where: {
-            OR: [
-              { requesterId: session.user.id, receiverId: profile.id, status: "accepted" },
-              { requesterId: profile.id, receiverId: session.user.id, status: "accepted" },
-            ],
-          },
-        })
-      : null) !== null;
+
+  // Look up the current user's Profile to get the Profile CUID for Connection queries.
+  // session.user.id is the User model ID, but Connection.requesterId/receiverId
+  // reference Profile.id — they are different records.
+  let isConnected = false;
+  if (!isOwner && !isPublic && session?.user?.id) {
+    const currentProfile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+    if (currentProfile) {
+      const connection = await prisma.connection.findFirst({
+        where: {
+          OR: [
+            { requesterId: currentProfile.id, receiverId: profile.id, status: "accepted" },
+            { requesterId: profile.id, receiverId: currentProfile.id, status: "accepted" },
+          ],
+        },
+      });
+      isConnected = !!connection;
+    }
+  }
 
   if (!isOwner && !isPublic && !isConnected) {
     // For connections-only profiles, return limited data
