@@ -39,8 +39,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/es", request.url));
   }
 
-  // Auth guard: protect /(app)/* routes
-  if (pathname.startsWith("/es/app") || pathname.startsWith("/en/app")) {
+  const isApiRoute = pathname.startsWith("/api/");
+  const isAppRoute =
+    pathname.startsWith("/es/app") || pathname.startsWith("/en/app");
+
+  // Auth guard for app routes only (APIs handle their own auth)
+  if (isAppRoute) {
     const session = await auth();
 
     if (!session?.user) {
@@ -50,26 +54,48 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Rate limiting for authenticated users
+    // Rate limiting for authenticated users on app routes
     const userId = session.user.id;
     if (userId) {
-      const { success: authSuccess } = await authenticatedLimiter.limit(userId);
+      const { success: authSuccess } =
+        await authenticatedLimiter.limit(userId);
       if (!authSuccess) {
         return new NextResponse("Too many requests", {
           status: 429,
           headers: { "Retry-After": "60" },
         });
       }
+    }
+  }
 
-      // DM rate limiting
-      if (pathname.includes("/messages") && request.method === "POST") {
-        const { success: dmSuccess } = await dmLimiter.limit(`dm:${userId}`);
-        if (!dmSuccess) {
-          return new NextResponse("Too many messages", {
-            status: 429,
-            headers: { "Retry-After": "60" },
-          });
-        }
+  // DM rate limiting for messages API (POST only)
+  if (isApiRoute && pathname.includes("/messages") && request.method === "POST") {
+    const session = await auth();
+    if (session?.user?.id) {
+      const { success: dmSuccess } = await dmLimiter.limit(
+        `dm:${session.user.id}`,
+      );
+      if (!dmSuccess) {
+        return new NextResponse("Too many messages", {
+          status: 429,
+          headers: { "Retry-After": "60" },
+        });
+      }
+    }
+  }
+
+  // Authenticated rate limiting for API routes
+  if (isApiRoute) {
+    const session = await auth();
+    if (session?.user?.id) {
+      const { success: authSuccess } = await authenticatedLimiter.limit(
+        session.user.id,
+      );
+      if (!authSuccess) {
+        return new NextResponse("Too many requests", {
+          status: 429,
+          headers: { "Retry-After": "60" },
+        });
       }
     }
   }
@@ -91,6 +117,7 @@ export const config = {
     "/",
     "/es/:path*",
     "/en/:path*",
-    "/((?!api|_next/static|_next/image|favicon.ico|icons|locales|sw.js|workbox-.*).*)",
+    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|icons|locales|sw.js|workbox-.*).*)",
   ],
 };
