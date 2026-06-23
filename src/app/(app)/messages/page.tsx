@@ -1,7 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
+
+export const dynamic = "force-dynamic";
+
+function MessagesLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[200px]">
+      <div className="text-slate-400">Cargando conversaciones...</div>
+    </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<MessagesLoading />}>
+      <MessagesContent />
+    </Suspense>
+  );
+}
+
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessagesStore } from "@/lib/stores/messages";
@@ -26,7 +46,7 @@ interface ConversationData {
   } | null;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { t } = useTranslation("messages");
   const { t: tCommon } = useTranslation("common");
   const searchParams = useSearchParams();
