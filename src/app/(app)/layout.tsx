@@ -16,6 +16,14 @@ const NAV_ITEMS = [
   { key: "jams", href: "/es/jams" },
 ] as const;
 
+const NAV_ICONS: Record<string, string> = {
+  discover: "🔍",
+  profile: "👤",
+  connections: "🤝",
+  messages: "💬",
+  jams: "🎵",
+};
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUIStore();
   const { userId, clearAuth } = useAuthStore();
@@ -63,7 +71,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     : "text-slate-400 hover:text-white hover:bg-slate-800",
                 )}
               >
-                <span className="w-5 h-5 flex items-center justify-center">●</span>
+                <span className="w-5 h-5 flex items-center justify-center">{NAV_ICONS[item.key] || "●"}</span>
                 {sidebarOpen && <span>{t(`nav.${item.key}`)}</span>}
               </Link>
             );
