@@ -72,6 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <span className="w-5 h-5 flex items-center justify-center">{NAV_ICONS[item.key] || "●"}</span>
+                {isActive && <span className="w-1 h-1 bg-brand-500 rounded-full animate-pulse" />}
                 {sidebarOpen && <span>{t(`nav.${item.key}`)}</span>}
               </Link>
             );
