@@ -145,7 +145,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
       {/* Empty state: no filters applied */}
       {!hasFilters && (
-        <div className="text-center py-16">
+        <div className="text-center py-20">
+          <div className="text-5xl mb-6 animate-bounce">🎸</div>
           <p className="text-slate-400 text-lg">
             Aplicá filtros para descubrir músicos cerca tuyo.
           </p>
