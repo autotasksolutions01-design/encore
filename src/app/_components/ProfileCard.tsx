@@ -10,6 +10,7 @@ interface ProfileCardProps {
   city: string;
   avatarUrl?: string | null;
   className?: string;
+  distanceKm?: number;
 }
 
 const MAX_INSTRUMENTS = 3;
@@ -38,6 +39,7 @@ export function ProfileCard({
   city,
   avatarUrl,
   className,
+  distanceKm,
 }: ProfileCardProps) {
   const instrumentDisplay = instruments.slice(0, MAX_INSTRUMENTS);
   const instrumentOverflow = instruments.length - MAX_INSTRUMENTS;
@@ -80,6 +82,11 @@ export function ProfileCard({
             {displayName}
           </h3>
           <p className="text-sm text-slate-400 mt-0.5">{city}</p>
+          {distanceKm !== undefined && (
+            <p className="text-xs text-slate-500 mt-0.5">
+              📍 {distanceKm.toFixed(1)} km
+            </p>
+          )}
 
           {/* Skill badge */}
           <div className="mt-2">
@@ -130,6 +137,13 @@ export function ProfileCard({
               )}
             </div>
           )}
+
+          {/* Connect quick action */}
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-brand-600/20 hover:text-brand-400 hover:border-brand-600/50 transition-colors">
+              🤝 Conectar
+            </span>
+          </div>
         </div>
       </div>
     </Link>
