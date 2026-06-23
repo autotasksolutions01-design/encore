@@ -65,7 +65,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.key}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-brand-600/20 text-brand-400"
                     : "text-slate-400 hover:text-white hover:bg-slate-800",
