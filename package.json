@@ -16,7 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:postgis": "psql $DIRECT_URL -f prisma/postgis-setup.sql"
+    "db:postgis": "docker compose exec -T db psql -U encore -d encore < prisma/postgis-indexes.sql"
   },
   "repository": {
     "type": "git",
@@ -66,6 +66,7 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.9",
     "jsdom": "^29.1.1",
@@ -73,6 +74,7 @@
     "prettier": "^3.8.4",
     "prisma": "^7.8.0",
     "tailwindcss": "^4.3.1",
+    "tsx": "^4.22.4",
     "typescript": "5.9.3",
     "vitest": "^4.1.9"
   }
