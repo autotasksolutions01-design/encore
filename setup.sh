@@ -31,9 +31,10 @@ echo "🔧 Generando Prisma Client..."
 npx prisma generate
 echo ""
 
-# 5. Correr migraciones
-echo "🗄️  Aplicando migraciones..."
-npx prisma migrate dev --name init 2>/dev/null || npx prisma db push
+# 5. Sync database schema
+# Greenfield/local dev workflow: db push avoids creating ad-hoc migrations during setup.
+echo "🗄️  Sincronizando schema..."
+npx prisma db push
 echo ""
 
 # 6. Activar PostGIS
