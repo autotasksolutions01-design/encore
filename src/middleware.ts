@@ -4,8 +4,6 @@ import { auth } from "@/lib/auth";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-export const runtime = "nodejs";
-
 // Rate limiting: solo activo si UPSTASH_REDIS_REST_URL está configurado
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const isUpstash = redisUrl?.startsWith("https://");
@@ -116,6 +114,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  runtime: "nodejs",
   matcher: [
     "/",
     "/es/:path*",
