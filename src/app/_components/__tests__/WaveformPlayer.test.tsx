@@ -43,7 +43,7 @@ describe("WaveformPlayer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock canvas getContext
-    HTMLCanvasElement.prototype.getContext = mockGetContext;
+    HTMLCanvasElement.prototype.getContext = mockGetContext as unknown as typeof HTMLCanvasElement.prototype.getContext;
     // Mock devicePixelRatio
     Object.defineProperty(window, "devicePixelRatio", {
       value: 1,
@@ -92,7 +92,7 @@ describe("WaveformPlayer", () => {
     // Mock Howler to trigger onloaderror
     vi.doMock("howler", () => ({
       Howl: vi.fn((opts: { onloaderror?: () => void }) => {
-        setTimeout(() => opts.onloaderror?.(0, new Error("Load error")), 0);
+        setTimeout(() => opts.onloaderror?.(), 0);
         return mockHowlInstance;
       }),
     }));

@@ -1,0 +1,38 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: encore-db
+    environment:
+      POSTGRES_USER: encore
+      POSTGRES_PASSWORD: encore_dev
+      POSTGRES_DB: encore
+    ports:
+      - "54322:5432"
+    volumes:
+      - encore_pgdata:/var/lib/postgresql/data
+      - ./prisma/postgis-setup.sql:/docker-entrypoint-initdb.d/01-postgis.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encore -d encore"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: encore-redis
+    command: redis-server --requirepass encore_redis --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - encore_redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a encore_redis ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  encore_pgdata:
+  encore_redisdata:

@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+!.env.sandbox.example
+tsconfig.tsbuildinfo
+npm-debug.log*
+coverage
+.turbo
+.vercel
+.engram
+.atl

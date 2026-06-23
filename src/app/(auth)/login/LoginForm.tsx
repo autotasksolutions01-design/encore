@@ -7,6 +7,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 
+const TEST_USERS = [
+  { name: "Luciana (Guitarrista)", email: "luciana@encore.local" },
+  { name: "Martín (Baterista)", email: "martin@encore.local" },
+  { name: "Valen (Bajista)", email: "valen@encore.local" },
+  { name: "Seba (Tecladista)", email: "seba@encore.local" },
+];
+
 export default function LoginForm() {
   const { t } = useTranslation("auth");
   const searchParams = useSearchParams();
@@ -15,6 +22,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState<string | null>(null);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isDev = process.env.NODE_ENV === "development";
 
   const handleGoogleSignIn = async () => {
     setLoading("google");
@@ -45,6 +54,12 @@ export default function LoginForm() {
     }
   };
 
+  const handleDevSignIn = (devEmail: string) => {
+    setLoading("dev");
+    // Usar el endpoint directo que funciona con túneles
+    window.location.href = `/api/dev-login?email=${encodeURIComponent(devEmail)}`;
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
@@ -64,6 +79,49 @@ export default function LoginForm() {
           </div>
         ) : (
           <>
+            {/* Dev Login — solo en desarrollo */}
+            {isDev && (
+              <div className="rounded-lg border border-amber-800 bg-amber-950/30 p-4 space-y-3">
+                <p className="text-xs font-medium text-amber-400 uppercase tracking-wider">
+                  🛠 Dev Login (sin OAuth)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {TEST_USERS.map((user) => (
+                    <button
+                      key={user.email}
+                      onClick={() => handleDevSignIn(user.email)}
+                      disabled={loading !== null}
+                      className="rounded-lg border border-amber-800/50 bg-amber-950/50 px-3 py-2 text-xs text-amber-200 hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+                    >
+                      {user.name}
+                    </button>
+                  ))}
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (email) handleDevSignIn(email);
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="otro@email.com"
+                    className="flex-1 rounded-lg border border-amber-800/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-200 placeholder-amber-700 focus:border-amber-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading !== null || !email}
+                    className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  >
+                    Entrar
+                  </button>
+                </form>
+              </div>
+            )}
+
             <button
               onClick={handleGoogleSignIn}
               disabled={loading !== null}
