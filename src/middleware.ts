@@ -4,31 +4,40 @@ import { auth } from "@/lib/auth";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+export const runtime = "nodejs";
 
-const unauthenticatedLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(100, "1 m"),
-  analytics: true,
-  prefix: "ratelimit:unauth",
-});
+// Rate limiting: solo activo si UPSTASH_REDIS_REST_URL está configurado
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const isUpstash = redisUrl?.startsWith("https://");
 
-const authenticatedLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(300, "1 m"),
-  analytics: true,
-  prefix: "ratelimit:auth",
-});
+let authenticatedLimiter: Ratelimit | null = null;
+let unauthenticatedLimiter: Ratelimit | null = null;
+let dmLimiter: Ratelimit | null = null;
 
-const dmLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(30, "1 m"),
-  analytics: true,
-  prefix: "ratelimit:dm",
-});
+if (redisUrl && isUpstash) {
+  const redis = new Redis({
+    url: redisUrl,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
+  });
+
+  authenticatedLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(300, "1 m"),
+    prefix: "ratelimit:auth",
+  });
+
+  unauthenticatedLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(100, "1 m"),
+    prefix: "ratelimit:unauth",
+  });
+
+  dmLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, "1 m"),
+    prefix: "ratelimit:dm",
+  });
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -45,12 +54,12 @@ export async function middleware(request: NextRequest) {
   const isAppRoute =
     pathname.startsWith("/es/app") || pathname.startsWith("/en/app");
 
-  // Skip rate limiting for NextAuth internal routes and Vercel Cron jobs
+  // Skip auth + rate limiting for NextAuth and Cron routes
   if (isAuthRoute || isCronRoute) {
     return NextResponse.next();
   }
 
-  // Auth guard for app routes only (APIs handle their own auth)
+  // Auth guard for app routes
   if (isAppRoute) {
     const session = await auth();
 
@@ -62,11 +71,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // Rate limiting for authenticated users on app routes
-    const userId = session.user.id;
-    if (userId) {
-      const { success: authSuccess } =
-        await authenticatedLimiter.limit(userId);
-      if (!authSuccess) {
+    if (authenticatedLimiter && session.user.id) {
+      const { success } = await authenticatedLimiter.limit(session.user.id);
+      if (!success) {
         return new NextResponse("Too many requests", {
           status: 429,
           headers: { "Retry-After": "60" },
@@ -75,14 +82,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // DM rate limiting for messages API (POST only)
-  if (isApiRoute && pathname.includes("/messages") && request.method === "POST") {
+  // DM rate limiting
+  if (
+    dmLimiter &&
+    isApiRoute &&
+    pathname.includes("/messages") &&
+    request.method === "POST"
+  ) {
     const session = await auth();
     if (session?.user?.id) {
-      const { success: dmSuccess } = await dmLimiter.limit(
-        `dm:${session.user.id}`,
-      );
-      if (!dmSuccess) {
+      const { success } = await dmLimiter.limit(`dm:${session.user.id}`);
+      if (!success) {
         return new NextResponse("Too many messages", {
           status: 429,
           headers: { "Retry-After": "60" },
@@ -91,29 +101,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Authenticated rate limiting for API routes
-  if (isApiRoute) {
-    const session = await auth();
-    if (session?.user?.id) {
-      const { success: authSuccess } = await authenticatedLimiter.limit(
-        session.user.id,
-      );
-      if (!authSuccess) {
-        return new NextResponse("Too many requests", {
-          status: 429,
-          headers: { "Retry-After": "60" },
-        });
-      }
+  // General rate limiting
+  if (unauthenticatedLimiter) {
+    const { success } = await unauthenticatedLimiter.limit(ip);
+    if (!success) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      });
     }
-  }
-
-  // Rate limiting for unauthenticated users
-  const { success: unauthSuccess } = await unauthenticatedLimiter.limit(ip);
-  if (!unauthSuccess) {
-    return new NextResponse("Too many requests", {
-      status: 429,
-      headers: { "Retry-After": "60" },
-    });
   }
 
   return NextResponse.next();
