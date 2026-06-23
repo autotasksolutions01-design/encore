@@ -6,12 +6,19 @@ echo "  🎸 Encore — Setup de desarrollo local"
 echo "════════════════════════════════════════"
 echo ""
 
-# 1. Levantar base de datos y Redis
+# 1. Ensure local environment file exists
+if [ ! -f ".env" ]; then
+  echo "📝 Creando .env desde .env.example..."
+  cp .env.example .env
+  echo ""
+fi
+
+# 2. Levantar base de datos y Redis
 echo "📦 Levantando PostgreSQL + Redis..."
 docker compose up -d --wait
 echo ""
 
-# 2. Esperar a que PostgreSQL esté listo
+# 3. Esperar a que PostgreSQL esté listo
 echo "⏳ Esperando que PostgreSQL acepte conexiones..."
 until docker compose exec -T db pg_isready -U encore -d encore > /dev/null 2>&1; do
   sleep 1
@@ -19,32 +26,32 @@ done
 echo "   ✅ PostgreSQL listo"
 echo ""
 
-# 3. Instalar dependencias si hace falta
+# 4. Instalar dependencias si hace falta
 if [ ! -d "node_modules" ]; then
   echo "📥 Instalando dependencias..."
   npm install
   echo ""
 fi
 
-# 4. Generar Prisma Client
+# 5. Generar Prisma Client
 echo "🔧 Generando Prisma Client..."
 npx prisma generate
 echo ""
 
-# 5. Sync database schema
+# 6. Sync database schema
 # Greenfield/local dev workflow: db push avoids creating ad-hoc migrations during setup.
 echo "🗄️  Sincronizando schema..."
 npx prisma db push
 echo ""
 
-# 6. Activar PostGIS
+# 7. Activar PostGIS
 echo "📍 Activando PostGIS..."
 docker compose exec -T db psql -U encore -d encore -f /docker-entrypoint-initdb.d/01-postgis.sql 2>/dev/null || true
 docker compose exec -T db psql -U encore -d encore < prisma/postgis-indexes.sql
 echo "   ✅ PostGIS listo"
 echo ""
 
-# 7. Seed de datos de prueba
+# 8. Seed de datos de prueba
 echo "🌱 Sembrando datos de prueba..."
 npx tsx prisma/seed.ts
 echo ""
