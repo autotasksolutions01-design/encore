@@ -54,7 +54,7 @@ export function ProfileCard({
     <Link
       href={`/es/profile/${id}`}
       className={cn(
-        "block rounded-xl border border-slate-800 bg-slate-900 p-5 transition-all hover:border-slate-600 hover:bg-slate-800/50",
+        "block rounded-xl border border-slate-800 bg-slate-900 p-5 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 hover:border-slate-600 hover:bg-slate-800/50",
         className,
       )}
     >
