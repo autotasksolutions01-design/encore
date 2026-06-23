@@ -109,7 +109,7 @@ export default function ProfileEditPage() {
     autoSaveTimer.current = setInterval(() => {
       const partial: Partial<ProfileUpdateInput> = {
         displayName: form.displayName,
-        bio: form.bio || null,
+        bio: form.bio || undefined,
         skillLevel: form.skillLevel as ProfileUpdateInput["skillLevel"],
         city: form.city,
         instruments: form.instruments,
@@ -147,7 +147,7 @@ export default function ProfileEditPage() {
     try {
       const partial: Partial<ProfileUpdateInput> = {
         displayName: form.displayName,
-        bio: form.bio || null,
+        bio: form.bio || undefined,
         skillLevel: form.skillLevel as ProfileUpdateInput["skillLevel"],
         city: form.city,
         instruments: form.instruments,
