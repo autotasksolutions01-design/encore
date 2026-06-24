@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { OnboardingWizard } from "../OnboardingWizard";
 
+const mockPush = vi.fn();
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
     refresh: vi.fn(),
   }),
 }));
@@ -263,5 +265,12 @@ describe("OnboardingWizard", () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
     });
+
+    await waitFor(
+      () => {
+        expect(mockPush).toHaveBeenCalledWith("/es/discover?welcome=1");
+      },
+      { timeout: 3000 },
+    );
   });
 });
