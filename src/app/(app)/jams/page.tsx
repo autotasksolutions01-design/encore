@@ -1,11 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { CreateJamForm } from "@/app/_components/CreateJamForm";
-import { JamCard } from "@/app/_components/JamCard";
+import { GenreChips } from "@/app/_components/GenreChips";
+import { JamHeroCard } from "@/app/_components/JamHeroCard";
+import { JamGridCard } from "@/app/_components/JamGridCard";
 import { auth } from "@/lib/auth";
-import type { JamStatus } from "@prisma/client";
 
 const RESULTS_PER_PAGE = 20;
 const MAX_RADIUS_KM = 500;
+
+type JamResponder = {
+  name: string;
+  response: string;
+};
 
 interface JamsPageProps {
   searchParams: Promise<{
@@ -38,7 +44,10 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
     lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng);
 
   // Build query for active, future jams
-  const conditions: string[] = ['js."status" = \'active\'', 'js."dateTime" > NOW()'];
+  const conditions: string[] = [
+    'js."status" = \'active\'',
+    'js."dateTime" > NOW()',
+  ];
   const queryParams: (string | number)[] = [];
   let paramIdx = 0;
 
@@ -90,6 +99,7 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
     creatorSkillLevel: string;
     creatorCity: string;
     responseCount: number;
+    responders: JamResponder[];
     userHasResponded: string | null;
   }[] = [];
 
@@ -106,7 +116,19 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
           SELECT COUNT(*)::int
           FROM "JamResponse" jr
           WHERE jr."jamId" = js.id
-        ) as "responseCount"
+        ) as "responseCount",
+        COALESCE(
+          (
+            SELECT json_agg(json_build_object(
+              'name', COALESCE(u.name, ''),
+              'response', jr.response::text
+            ) ORDER BY jr."createdAt" ASC)
+            FROM "JamResponse" jr
+            JOIN "User" u ON u.id = jr."userId"
+            WHERE jr."jamId" = js.id
+          ),
+          '[]'::json
+        ) as "responders"
         ${
           isAuthenticated
             ? `, (
@@ -130,46 +152,71 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
   const hasMore = offset + RESULTS_PER_PAGE < total;
   const totalPages = Math.ceil(total / RESULTS_PER_PAGE);
 
+  // Hero jam only on page 1
+  const heroJam = page === 1 && jams.length > 0 ? jams[0] : null;
+  const gridJams = heroJam ? jams.slice(1) : jams;
+
+  // Group remaining jams by temporal buckets
+  const groups = groupJamsByTemporalBucket(gridJams);
+
+  // Compute distances if spatial params present
+  function getDistanceKm(jamLat: number, jamLng: number): number | undefined {
+    if (!hasSpatial) return undefined;
+    return haversineDistance(lat!, lng!, jamLat, jamLng);
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Jams</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="font-[family-name:var(--font-space-grotesk)] text-white font-bold text-[30px] tracking-[-0.8px]">
+            Jams
+          </h1>
+          <p className="text-sm text-[#9aa7b5] mt-1">
             Encontrá y organizá encuentros musicales cerca tuyo.
           </p>
         </div>
         {isAuthenticated && <CreateJamForm />}
       </div>
 
-      {/* Filters */}
-      <form className="flex flex-wrap gap-3" method="GET">
-        <select
-          name="genre"
-          defaultValue={genre ?? ""}
-          className="bg-slate-800 text-slate-200 rounded-lg px-3 py-2 text-sm border border-slate-700 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          aria-label="Filtrar por género"
+      {/* Location hint */}
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 bg-transparent border-none text-[#9aa7b5] text-[13px] cursor-pointer p-0 mb-1"
+        id="geolocate-btn"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <option value="">Todos los géneros</option>
-          <option value="rock">Rock</option>
-          <option value="jazz">Jazz</option>
-          <option value="blues">Blues</option>
-          <option value="funk">Funk</option>
-          <option value="indie">Indie</option>
-          <option value="electronica">Electrónica</option>
-          <option value="folk">Folk</option>
-          <option value="clasica">Clásica</option>
-          <option value="tango">Tango</option>
-          <option value="reggae">Reggae</option>
-        </select>
-        {/* Hidden fields preserve lat/lng from JS geolocation */}
+          <path d="M12 21s-7-5.7-7-11a7 7 0 0 1 14 0c0 5.3-7 11-7 11z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </svg>
+        {hasSpatial
+          ? `Buenos Aires · ${Math.min(radius ?? 50, MAX_RADIUS_KM)} km`
+          : "Activá tu ubicación para ver jams cerca"}
+        <span className="text-[#6b7785]">▾</span>
+      </button>
+
+      {/* Genre chips */}
+      <GenreChips />
+
+      {/* Radius filter — compact inline */}
+      <form className="flex flex-wrap items-center gap-2 mb-4" method="GET">
+        <input type="hidden" name="genre" value={genre ?? ""} />
         <input type="hidden" name="lat" value={latStr ?? ""} />
         <input type="hidden" name="lng" value={lngStr ?? ""} />
         {hasSpatial && (
           <select
             name="radius"
             defaultValue={radius?.toString() ?? "50"}
-            className="bg-slate-800 text-slate-200 rounded-lg px-3 py-2 text-sm border border-slate-700 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="bg-slate-800 text-slate-200 rounded-lg px-3 py-1.5 text-xs border border-slate-700 focus:outline-none focus:ring-1 focus:ring-brand-500"
             aria-label="Radio de búsqueda"
           >
             <option value="5">5 km</option>
@@ -179,41 +226,37 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
             <option value="100">100 km</option>
           </select>
         )}
-        <button
-          type="submit"
-          className="bg-brand-600 hover:bg-brand-500 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-        >
-          Filtrar
-        </button>
-      </form>
-
-      {/* Geolocation helper */}
-      {!hasSpatial && (
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-          <p className="text-sm text-slate-400">
-            Activá tu ubicación para ver jams cerca tuyo.
-          </p>
+        {hasSpatial && (
           <button
-            type="button"
-            className="mt-2 text-sm text-brand-400 hover:text-brand-300"
-            id="geolocate-btn"
+            type="submit"
+            className="bg-brand-600 hover:bg-brand-500 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
           >
-            Usar mi ubicación
+            Actualizar radio
           </button>
-        </div>
-      )}
+        )}
+      </form>
 
       {/* Results */}
       <div>
-        {total > 0 && (
-          <p className="text-sm text-slate-400 mb-4">
-            {total} jam{total !== 1 ? "s" : ""}{" "}
-            {genre ? `de ${genre}` : ""}{" "}
-            {hasSpatial ? `en un radio de ${radius ?? 50}km` : ""}
-          </p>
+        {/* Hero jam */}
+        {heroJam && (
+          <JamHeroCard
+            id={heroJam.id}
+            title={heroJam.title}
+            genre={heroJam.genre}
+            dateTime={new Date(heroJam.dateTime)}
+            locationName={heroJam.locationName}
+            responseCount={heroJam.responseCount}
+            userHasResponded={heroJam.userHasResponded}
+            responders={heroJam.responders}
+            distanceKm={getDistanceKm(heroJam.lat, heroJam.lng)}
+            userLat={lat}
+            userLng={lng}
+          />
         )}
 
-        {jams.length === 0 ? (
+        {/* Temporal groups */}
+        {groups.length === 0 && jams.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-slate-400 text-lg">
               {genre || hasSpatial
@@ -222,28 +265,29 @@ export default async function JamsPage({ searchParams }: JamsPageProps) {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {jams.map((jam) => (
-              <JamCard
-                key={jam.id}
-                id={jam.id}
-                title={jam.title}
-                genre={jam.genre}
-                dateTime={jam.dateTime.toISOString()}
-                locationName={jam.locationName}
-                description={jam.description}
-                status={jam.status as JamStatus}
-                responseCount={jam.responseCount}
-                userHasResponded={jam.userHasResponded}
-                creator={{
-                  id: jam.creatorId,
-                  displayName: jam.creatorName,
-                  skillLevel: jam.creatorSkillLevel,
-                  city: jam.creatorCity,
-                }}
-              />
-            ))}
-          </div>
+          groups.map((group) => (
+            <div key={group.label} className="mb-[22px]">
+              <div className="font-[family-name:var(--font-space-grotesk)] text-xs font-semibold tracking-[1.2px] text-[#6b7785] uppercase mb-[11px]">
+                {group.label}
+              </div>
+              <div className="flex flex-col gap-3">
+                {group.items.map((jam) => (
+                  <JamGridCard
+                    key={jam.id}
+                    id={jam.id}
+                    title={jam.title}
+                    genre={jam.genre}
+                    dateTime={new Date(jam.dateTime)}
+                    locationName={jam.locationName}
+                    responseCount={jam.responseCount}
+                    userHasResponded={jam.userHasResponded}
+                    responders={jam.responders}
+                    distanceKm={getDistanceKm(jam.lat, jam.lng)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
         )}
 
         {/* Pagination */}
@@ -287,4 +331,85 @@ function buildPageUrl(
   }
   params.set("page", String(page));
   return params.toString();
+}
+
+function haversineDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function getTemporalBucketLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfterTomorrow = new Date(today);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+  // Rest of this week (Sun to Sat, where Sunday=0)
+  const endOfWeek = new Date(today);
+  const daysUntilSunday = today.getDay() === 0 ? 0 : 7 - today.getDay();
+  endOfWeek.setDate(endOfWeek.getDate() + daysUntilSunday);
+
+  if (date < tomorrow) return "Hoy";
+  if (date < dayAfterTomorrow) return "Mañana";
+
+  if (date < endOfWeek) {
+    return date.toLocaleDateString("es-AR", { weekday: "long" });
+  }
+
+  return date.toLocaleDateString("es-AR", {
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function groupJamsByTemporalBucket(
+  jams: {
+    id: string;
+    title: string;
+    genre: string;
+    dateTime: Date;
+    lat: number;
+    lng: number;
+    locationName: string;
+    description: string | null;
+    status: string;
+    createdAt: Date;
+    creatorId: string;
+    creatorName: string;
+    creatorSkillLevel: string;
+    creatorCity: string;
+    responseCount: number;
+    responders: JamResponder[];
+    userHasResponded: string | null;
+  }[],
+): { label: string; items: typeof jams }[] {
+  const groups: { label: string; items: typeof jams }[] = [];
+
+  for (const jam of jams) {
+    const label = getTemporalBucketLabel(new Date(jam.dateTime));
+    let group = groups.find((g) => g.label === label);
+    if (!group) {
+      group = { label, items: [] };
+      groups.push(group);
+    }
+    group.items.push(jam);
+  }
+
+  return groups;
 }
