@@ -163,6 +163,53 @@ export function PublicProfileView({
         </div>
       </div>
 
+      {/* Audio Clips — demos first */}
+      {profile.audioClips.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
+            {t("audioClips")}
+          </h2>
+          <div className="space-y-2">
+            {profile.audioClips.map((clip) => (
+              <div
+                key={clip.id}
+                className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3"
+              >
+                <span className="text-sm font-medium text-white">
+                  {clip.title}
+                </span>
+                {clip.duration != null && (
+                  <span className="text-xs text-slate-500">
+                    {Math.round(clip.duration)}s
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Looking For — intent chips */}
+      {profile.lookingFor.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
+            {t("lookingFor")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {profile.lookingFor.map((lf, i) => (
+              <span
+                key={i}
+                className="rounded-full border border-brand-600/40 bg-brand-600/10 px-3 py-1 text-sm font-medium text-brand-300"
+              >
+                {t(`role.${lf.role}`, { defaultValue: lf.role })}
+                {lf.instrument ? ` · ${lf.instrument}` : ""}
+                {lf.genre ? ` · ${lf.genre}` : ""}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Instruments */}
       <section>
         <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
@@ -206,61 +253,6 @@ export function PublicProfileView({
           <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
             {profile.bio}
           </p>
-        </section>
-      )}
-
-      {/* Looking For */}
-      {profile.lookingFor.length > 0 && (
-        <section>
-          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
-            {t("lookingFor")}
-          </h2>
-          <div className="space-y-2">
-            {profile.lookingFor.map((lf, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3"
-              >
-                <span className="text-sm font-medium text-white">
-                  {t(`role.${lf.role}`, { defaultValue: lf.role })}
-                </span>
-                {lf.instrument && (
-                  <span className="text-sm text-slate-400">
-                    {lf.instrument}
-                  </span>
-                )}
-                {lf.genre && (
-                  <span className="text-sm text-slate-400">{lf.genre}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Audio Clips */}
-      {profile.audioClips.length > 0 && (
-        <section>
-          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
-            Clips
-          </h2>
-          <div className="space-y-2">
-            {profile.audioClips.map((clip) => (
-              <div
-                key={clip.id}
-                className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3"
-              >
-                <span className="text-sm font-medium text-white">
-                  {clip.title}
-                </span>
-                {clip.duration != null && (
-                  <span className="text-xs text-slate-500">
-                    {Math.round(clip.duration)}s
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
         </section>
       )}
     </div>
