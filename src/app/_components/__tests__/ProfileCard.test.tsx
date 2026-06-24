@@ -1,6 +1,45 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ProfileCard } from "../ProfileCard";
+
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+    className,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}));
+
+const mockHowl = vi.fn();
+const mockHowlInstance = {
+  play: vi.fn(),
+  pause: vi.fn(),
+  playing: vi.fn().mockReturnValue(false),
+  duration: vi.fn().mockReturnValue(30),
+  seek: vi.fn().mockReturnValue(0),
+  unload: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+};
+
+mockHowl.mockImplementation(() => mockHowlInstance);
+
+vi.mock("howler", () => ({
+  Howl: mockHowl,
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockHowl.mockImplementation(() => mockHowlInstance);
+});
 
 describe("ProfileCard", () => {
   const baseProps = {
@@ -28,7 +67,6 @@ describe("ProfileCard", () => {
     expect(screen.getByText("guitar")).toBeTruthy();
     expect(screen.getByText("bass")).toBeTruthy();
     expect(screen.getByText("drums")).toBeTruthy();
-    // Two "+1" elements exist (instruments + genres)
     const overflow = screen.getAllByText("+1");
     expect(overflow.length).toBe(2);
   });
@@ -37,7 +75,6 @@ describe("ProfileCard", () => {
     render(<ProfileCard {...baseProps} />);
     expect(screen.getByText("rock")).toBeTruthy();
     expect(screen.getByText("blues")).toBeTruthy();
-    // Two "+1" elements exist (instruments + genres)
     const overflow = screen.getAllByText("+1");
     expect(overflow.length).toBe(2);
   });
@@ -91,6 +128,56 @@ describe("ProfileCard", () => {
     );
     expect(screen.getByText("rock")).toBeTruthy();
     expect(screen.getByText("blues")).toBeTruthy();
-    // No +N for genres since we have exactly 2
+  });
+
+  it("shows distance when provided", () => {
+    render(<ProfileCard {...baseProps} distanceKm={12.34} />);
+    expect(screen.getByText("12.3 km")).toBeTruthy();
+  });
+
+  it("renders connect button with Conectar text", () => {
+    render(<ProfileCard {...baseProps} />);
+    expect(screen.getByText("Conectar")).toBeTruthy();
+  });
+
+  it("changes connect button text on click", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ connection: { id: "conn-1", status: "pending" } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<ProfileCard {...baseProps} />);
+    const btn = screen.getByText("Conectar");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Enviado ✓")).toBeTruthy();
+    });
+  });
+
+  it("does not render audio preview when no audioClips", () => {
+    render(<ProfileCard {...baseProps} />);
+    expect(screen.queryByRole("button", { name: /reproducir|pausar/i })).toBeNull();
+  });
+
+  it("renders audio preview when audioClips provided", () => {
+    render(
+      <ProfileCard
+        {...baseProps}
+        audioClips={[
+          {
+            id: "clip-1",
+            title: "Mi demo",
+            audioUrl: "https://example.com/audio.mp3",
+            waveformData: [0.1, 0.5, 0.8, 0.3],
+            duration: 30,
+          },
+        ]}
+      />,
+    );
+    const playBtn = screen.getByRole("button", { name: /reproducir/i });
+    expect(playBtn).toBeTruthy();
   });
 });

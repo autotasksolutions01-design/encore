@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getR2PublicUrl } from "@/lib/r2-url";
 
 const RESULTS_PER_PAGE = 20;
 const MAX_RADIUS_KM = 500;
@@ -13,7 +14,15 @@ interface DiscoveryFilters {
   page?: number;
 }
 
-interface DiscoveryProfile {
+export interface AudioClipData {
+  id: string;
+  title: string;
+  audioUrl: string;
+  waveformData: number[];
+  duration: number | null;
+}
+
+export interface DiscoveryProfile {
   id: string;
   displayName: string;
   bio: string;
@@ -27,6 +36,8 @@ interface DiscoveryProfile {
   publishedAt: Date | null;
   instruments: string[];
   genres: string[];
+  distanceKm?: number;
+  audioClips: AudioClipData[];
 }
 
 interface DiscoveryResult {
@@ -96,24 +107,16 @@ export async function discoverProfiles(
   });
 
   const dataParams = buildDataParams(filters, radius, offset);
-  const rows = await prisma.$queryRawUnsafe<{
-    id: string;
-    displayName: string;
-    bio: string;
-    skillLevel: string;
-    city: string;
-    lat: number;
-    lng: number;
-    avatarKey: string | null;
-    avatarUrl: string | null;
-    name: string | null;
-    publishedAt: Date | null;
-  }[]>(dataQuery, ...dataParams);
+  const rows = await prisma.$queryRawUnsafe<(DiscoveredRow & { distance_m?: number })[]>(
+    dataQuery,
+    ...dataParams,
+  );
 
-  // Batch-load instruments and genres for all returned profiles
+  // Batch-load instruments, genres, and audio clips for all returned profiles
   const profileIds = rows.map((r) => r.id);
   const instrumentsMap = new Map<string, string[]>();
   const genresMap = new Map<string, string[]>();
+  const audioClipsMap = new Map<string, AudioClipData[]>();
 
   if (profileIds.length > 0) {
     const instruments = await prisma.profileInstrument.findMany({
@@ -135,9 +138,35 @@ export async function discoverProfiles(
       arr.push(g.genre);
       genresMap.set(g.profileId, arr);
     }
+
+    const clips = await prisma.audioClip.findMany({
+      where: { profileId: { in: profileIds } },
+      select: {
+        id: true,
+        title: true,
+        profileId: true,
+        transcodedKey: true,
+        waveformJson: true,
+        duration: true,
+      },
+      orderBy: { uploadedAt: "desc" },
+    });
+    for (const clip of clips) {
+      const arr = audioClipsMap.get(clip.profileId) ?? [];
+      arr.push({
+        id: clip.id,
+        title: clip.title,
+        audioUrl: getR2PublicUrl(clip.transcodedKey),
+        waveformData: Array.isArray(clip.waveformJson)
+          ? (clip.waveformJson as number[])
+          : [],
+        duration: clip.duration,
+      });
+      audioClipsMap.set(clip.profileId, arr);
+    }
   }
 
-  const profiles = rows.map((row) => ({
+  const profiles: DiscoveryProfile[] = rows.map((row) => ({
     id: row.id,
     displayName: row.displayName,
     bio: row.bio,
@@ -151,6 +180,8 @@ export async function discoverProfiles(
     instruments: instrumentsMap.get(row.id) ?? [],
     genres: genresMap.get(row.id) ?? [],
     publishedAt: row.publishedAt,
+    distanceKm: row.distance_m !== undefined ? Math.round((row.distance_m / 1000) * 10) / 10 : undefined,
+    audioClips: audioClipsMap.get(row.id) ?? [],
   }));
 
   return {
@@ -171,6 +202,20 @@ interface QueryBuildOptions {
   lat?: number;
   lng?: number;
   offset?: number;
+}
+
+interface DiscoveredRow {
+  id: string;
+  displayName: string;
+  bio: string;
+  skillLevel: string;
+  city: string;
+  lat: number;
+  lng: number;
+  avatarKey: string | null;
+  avatarUrl: string | null;
+  name: string | null;
+  publishedAt: Date | null;
 }
 
 function buildWhereClause(opts: QueryBuildOptions): string {
@@ -223,6 +268,24 @@ function buildOrderBy(opts: QueryBuildOptions): string {
   return 'ORDER BY p."publishedAt" DESC';
 }
 
+function buildSelectColumns(opts: QueryBuildOptions): string {
+  const cols = [
+    'p.id', 'p."displayName"', 'p.bio', 'p."skillLevel"', 'p.city',
+    'p.lat', 'p.lng', 'p."avatarKey"', 'p."publishedAt"',
+    'u."avatarUrl"', 'u.name',
+  ];
+  if (opts.hasSpatial) {
+    let idx = 1;
+    if (opts.hasInstrument) idx++;
+    if (opts.hasGenre) idx++;
+    if (opts.hasSkill) idx++;
+    cols.push(
+      `ST_Distance(ST_MakePoint(p."lng", p."lat")::geography, ST_MakePoint($${idx}, $${idx + 1})::geography) AS distance_m`,
+    );
+  }
+  return cols.join(", ");
+}
+
 function buildCountQuery(opts: QueryBuildOptions): string {
   const where = buildWhereClause(opts);
   const joins = buildJoins(opts);
@@ -232,13 +295,11 @@ function buildCountQuery(opts: QueryBuildOptions): string {
 function buildDataQuery(opts: QueryBuildOptions): string {
   const where = buildWhereClause(opts);
   const joins = buildJoins(opts);
+  const selectColumns = buildSelectColumns(opts);
   const order = buildOrderBy(opts);
 
   return `
-    SELECT DISTINCT
-      p.id, p."displayName", p.bio, p."skillLevel", p.city,
-      p.lat, p.lng, p."avatarKey", p."publishedAt",
-      u."avatarUrl", u.name
+    SELECT DISTINCT ${selectColumns}
     FROM "Profile" p
     JOIN "User" u ON u.id = p."userId"
     ${joins}
