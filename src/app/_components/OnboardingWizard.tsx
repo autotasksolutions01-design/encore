@@ -258,7 +258,7 @@ export function OnboardingWizard({ userId }: { userId: string }) {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/es/discover");
+        router.push("/es/discover?welcome=1");
         router.refresh();
       }, 1500);
     } catch (err) {

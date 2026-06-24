@@ -12,12 +12,14 @@ interface DiscoverPageProps {
     radius?: string;
     skill?: string;
     page?: string;
+    welcome?: string;
   }>;
 }
 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
   const sp = await searchParams;
 
+  const showWelcome = sp.welcome === "1";
   const instrument = sp.instrument;
   const genre = sp.genre;
   const location = sp.location;
@@ -72,6 +74,30 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
   return (
     <div className="space-y-6">
+      {showWelcome && (
+        <div className="rounded-xl border border-brand-800 bg-brand-950/40 p-6 text-center space-y-4">
+          <h2 className="text-xl font-bold text-white">
+            Tu perfil ya está listo 🎉
+          </h2>
+          <p className="text-sm text-slate-300 max-w-md mx-auto">
+            Ahora podés buscar músicos por instrumento, género y ubicación. Ajustá los filtros y encontrá conexiones para tu próximo proyecto.
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <a
+              href="/es/discover"
+              className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
+            >
+              Buscar músicos
+            </a>
+            <a
+              href="/es/profile/edit"
+              className="rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            >
+              Editar mi perfil
+            </a>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-white">Descubrí músicos</h1>
         <p className="text-sm text-slate-400 mt-1">
