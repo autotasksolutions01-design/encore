@@ -1,6 +1,7 @@
 import { SearchFilters } from "@/app/_components/SearchFilters";
 import { ProfileCard } from "@/app/_components/ProfileCard";
 import { discoverProfiles } from "@/lib/discovery";
+import type { DiscoveryProfile } from "@/lib/discovery";
 
 interface DiscoverPageProps {
   searchParams: Promise<{
@@ -36,20 +37,14 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
   const hasFilters = !!(instrument || genre || lat !== undefined || skill);
 
-  let result = {
-    profiles: [] as {
-      id: string;
-      displayName: string;
-      bio: string;
-      skillLevel: string;
-      city: string;
-      instruments: string[];
-      genres: string[];
-      avatarKey: string | null;
-      avatarUrl: string | null;
-      name: string | null;
-      publishedAt: Date | null;
-    }[],
+  let result: {
+    profiles: DiscoveryProfile[];
+    total: number;
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+  } = {
+    profiles: [],
     total: 0,
     page: 1,
     pageSize: 20,
@@ -136,6 +131,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                   skillLevel={profile.skillLevel}
                   city={profile.city}
                   avatarUrl={profile.avatarUrl}
+                  distanceKm={profile.distanceKm}
+                  audioClips={profile.audioClips}
                 />
               ))}
             </div>

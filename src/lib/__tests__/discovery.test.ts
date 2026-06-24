@@ -6,11 +6,16 @@ const { mockQueryRaw, mockFindMany } = vi.hoisted(() => ({
   mockFindMany: vi.fn(),
 }));
 
+vi.mock("@/lib/r2-url", () => ({
+  getR2PublicUrl: (key: string) => `https://r2.example.com/${key}`,
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     $queryRawUnsafe: mockQueryRaw,
     profileInstrument: { findMany: mockFindMany },
     profileGenre: { findMany: mockFindMany },
+    audioClip: { findMany: mockFindMany },
   },
 }));
 
@@ -34,6 +39,7 @@ describe("discoverProfiles", () => {
       avatarUrl: null,
       name: "Juan",
       publishedAt: new Date(),
+      distance_m: undefined,
     },
     {
       id: "profile-2",
@@ -47,6 +53,24 @@ describe("discoverProfiles", () => {
       avatarUrl: null,
       name: "Maria",
       publishedAt: new Date(),
+      distance_m: undefined,
+    },
+  ];
+
+  const mockSpatialProfiles = [
+    {
+      id: "profile-1",
+      displayName: "Juan Guitar",
+      bio: "Guitarrista",
+      skillLevel: "advanced",
+      city: "Buenos Aires",
+      lat: -34.6037,
+      lng: -58.3816,
+      avatarKey: null,
+      avatarUrl: null,
+      name: "Juan",
+      publishedAt: new Date(),
+      distance_m: 1200,
     },
   ];
 
@@ -67,7 +91,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce(mockProfiles); // data
     mockFindMany
       .mockResolvedValueOnce(mockInstruments)
-      .mockResolvedValueOnce(mockGenres);
+      .mockResolvedValueOnce(mockGenres)
+      .mockResolvedValueOnce([]); // audioClip.findMany
 
     const result = await discoverProfiles({});
 
@@ -86,7 +111,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce([mockProfiles[0]]);
     mockFindMany
       .mockResolvedValueOnce([mockInstruments[0]])
-      .mockResolvedValueOnce(mockGenres.slice(0, 2));
+      .mockResolvedValueOnce(mockGenres.slice(0, 2))
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({ instrument: "guitar" });
 
@@ -99,7 +125,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce(mockProfiles);
     mockFindMany
       .mockResolvedValueOnce(mockInstruments)
-      .mockResolvedValueOnce(mockGenres);
+      .mockResolvedValueOnce(mockGenres)
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({ genre: "rock" });
 
@@ -112,7 +139,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce([mockProfiles[0]]);
     mockFindMany
       .mockResolvedValueOnce([mockInstruments[0], mockInstruments[1]])
-      .mockResolvedValueOnce(mockGenres.slice(0, 2));
+      .mockResolvedValueOnce(mockGenres.slice(0, 2))
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({ skillLevel: "advanced" });
 
@@ -122,10 +150,11 @@ describe("discoverProfiles", () => {
 
   it("applies spatial filter when lat/lng provided", async () => {
     mockQueryRaw.mockResolvedValueOnce([{ total: 1 }]);
-    mockQueryRaw.mockResolvedValueOnce([mockProfiles[0]]);
+    mockQueryRaw.mockResolvedValueOnce(mockSpatialProfiles);
     mockFindMany
       .mockResolvedValueOnce([mockInstruments[0], mockInstruments[1]])
-      .mockResolvedValueOnce(mockGenres.slice(0, 2));
+      .mockResolvedValueOnce(mockGenres.slice(0, 2))
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({
       lat: -34.6037,
@@ -135,14 +164,16 @@ describe("discoverProfiles", () => {
 
     expect(result.total).toBe(1);
     expect(result.profiles).toHaveLength(1);
+    expect(result.profiles[0].distanceKm).toBe(1.2);
   });
 
   it("caps radius at 500km", async () => {
     mockQueryRaw.mockResolvedValueOnce([{ total: 1 }]);
-    mockQueryRaw.mockResolvedValueOnce([mockProfiles[0]]);
+    mockQueryRaw.mockResolvedValueOnce(mockSpatialProfiles);
     mockFindMany
       .mockResolvedValueOnce([mockInstruments[0]])
-      .mockResolvedValueOnce(mockGenres.slice(0, 1));
+      .mockResolvedValueOnce(mockGenres.slice(0, 1))
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({
       lat: -34.6037,
@@ -171,7 +202,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce(mockProfiles);
     mockFindMany
       .mockResolvedValueOnce(mockInstruments)
-      .mockResolvedValueOnce(mockGenres);
+      .mockResolvedValueOnce(mockGenres)
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({ page: 1 });
 
@@ -184,7 +216,8 @@ describe("discoverProfiles", () => {
     mockQueryRaw.mockResolvedValueOnce(mockProfiles);
     mockFindMany
       .mockResolvedValueOnce(mockInstruments)
-      .mockResolvedValueOnce(mockGenres);
+      .mockResolvedValueOnce(mockGenres)
+      .mockResolvedValueOnce([]);
 
     const result = await discoverProfiles({ page: -1 });
 
