@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import type { JamStatus } from "@prisma/client";
 
@@ -34,6 +37,16 @@ function getAvatarColors(index: number): string {
   return colors[index % colors.length];
 }
 
+function getSavedJams(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem("encore-saved-jams");
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
 export function JamGridCard({
   id,
   title,
@@ -45,6 +58,22 @@ export function JamGridCard({
   responders,
   distanceKm,
 }: JamGridCardProps) {
+  const [saved, setSaved] = useState(() => getSavedJams().has(id));
+
+  const toggleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const jamSet = getSavedJams();
+    if (jamSet.has(id)) {
+      jamSet.delete(id);
+      setSaved(false);
+    } else {
+      jamSet.add(id);
+      setSaved(true);
+    }
+    localStorage.setItem("encore-saved-jams", JSON.stringify([...jamSet]));
+  };
+
   const hours = dateTime.getHours().toString().padStart(2, "0");
   const mins = dateTime.getMinutes().toString().padStart(2, "0");
 
@@ -66,6 +95,17 @@ export function JamGridCard({
       href={`/es/jams/${id}`}
       className="relative flex gap-[14px] p-[15px] rounded-[18px] bg-[#161b22] border border-[#2a3140] hover:border-slate-600 transition-colors group"
     >
+      <button
+        onClick={toggleSave}
+        className="absolute top-[13px] right-[13px] w-[30px] h-[30px] rounded-[9px] border-none bg-transparent cursor-pointer flex items-center justify-center z-10"
+        style={{ color: saved ? "#ff922b" : "#6b7785" }}
+        aria-label={saved ? "Quitar de guardados" : "Guardar jam"}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill={saved ? "#ff922b" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+
       <div className="flex-shrink-0 w-[54px] text-center">
         <div className="font-[family-name:var(--font-space-grotesk)] text-white font-bold text-[19px] leading-none">
           {hours}

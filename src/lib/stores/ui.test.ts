@@ -5,13 +5,13 @@ describe("useUIStore", () => {
   beforeEach(() => {
     const { setSidebarOpen, setTheme } = useUIStore.getState();
     setSidebarOpen(true);
-    setTheme("dark");
+    setTheme("midnight");
   });
 
-  it("initializes with sidebar open and dark theme", () => {
+  it("initializes with sidebar open and midnight theme", () => {
     const state = useUIStore.getState();
     expect(state.sidebarOpen).toBe(true);
-    expect(state.theme).toBe("dark");
+    expect(state.theme).toBe("midnight");
   });
 
   it("toggles sidebar", () => {
@@ -31,16 +31,20 @@ describe("useUIStore", () => {
 
   it("sets theme", () => {
     const { setTheme } = useUIStore.getState();
-    setTheme("light");
-    expect(useUIStore.getState().theme).toBe("light");
+    setTheme("stage");
+    expect(useUIStore.getState().theme).toBe("stage");
   });
 
-  it("toggles theme", () => {
-    const { toggleTheme } = useUIStore.getState();
-    toggleTheme();
-    expect(useUIStore.getState().theme).toBe("light");
+  it("cycles theme", () => {
+    const { cycleTheme } = useUIStore.getState();
 
-    toggleTheme();
-    expect(useUIStore.getState().theme).toBe("dark");
+    cycleTheme();
+    expect(useUIStore.getState().theme).toBe("stage");
+
+    cycleTheme();
+    expect(useUIStore.getState().theme).toBe("daylight");
+
+    cycleTheme();
+    expect(useUIStore.getState().theme).toBe("midnight");
   });
 });

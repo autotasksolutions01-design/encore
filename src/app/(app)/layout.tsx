@@ -1,6 +1,7 @@
 "use client";
 
 import { useUIStore } from "@/lib/stores/ui";
+import type { Theme } from "@/lib/stores/ui";
 import { useAuthStore } from "@/lib/stores/auth";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -8,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { DesignNotes } from "@/app/_components/DesignNotes";
 
 const NAV_ITEMS = [
   { key: "jams", href: "/es/jams" },
@@ -44,12 +46,26 @@ const PerIcon = () => (
   </svg>
 );
 
+const NotasIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>
+  </svg>
+);
+
 const NAV_ICONS: Record<string, React.ReactNode> = {
   jams: <JamsIcon />,
   discover: <BuscarIcon />,
   messages: <MensajesIcon />,
   profile: <PerIcon />,
 };
+
+function getThemeGradient(theme: Theme): string {
+  switch (theme) {
+    case "midnight": return "linear-gradient(135deg, #0d1117, #5c7cfa)";
+    case "stage": return "linear-gradient(135deg, #0a0a0e, #ff922b)";
+    case "daylight": return "linear-gradient(135deg, #eef1f5, #4c6ef5)";
+  }
+}
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(true);
@@ -63,11 +79,16 @@ function useIsDesktop() {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { theme, toggleTheme } = useUIStore();
+  const { theme, setTheme, notesOpen, toggleNotes } = useUIStore();
   const { userId, clearAuth } = useAuthStore();
   const { t } = useTranslation("common");
   const pathname = usePathname();
   const isDesktop = useIsDesktop();
+
+  useEffect(() => {
+    document.documentElement.classList.remove("midnight", "stage", "daylight");
+    document.documentElement.classList.add(theme);
+  }, [theme]);
 
   if (!userId) {
     return <>{children}</>;
@@ -109,78 +130,120 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const ThemeSwatch = ({ t: themeKey, label }: { t: Theme; label: string }) => {
+    const isActive = theme === themeKey;
+    return (
+      <button
+        onClick={() => setTheme(themeKey)}
+        title={label}
+        className="flex-1 h-8 rounded-[9px] cursor-pointer transition-all duration-150"
+        style={{
+          background: getThemeGradient(themeKey),
+          border: isActive ? "2px solid var(--ec-text, #e6edf3)" : "2px solid transparent",
+        }}
+      />
+    );
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      {isDesktop && (
-        <aside className="w-[248px] flex-shrink-0 flex flex-col bg-[#161b22] border-r border-[#2a3140] px-4 pt-[22px] pb-4">
-          <div className="flex items-center gap-[10px] px-2 pb-[22px]">
-            <div className="w-[34px] h-[34px] rounded-[10px] bg-brand-500 flex items-center justify-center text-white font-bold text-[19px] font-[family-name:var(--font-space-grotesk)]">
-              E
-            </div>
-            <span className="text-[21px] font-bold tracking-[-0.5px] font-[family-name:var(--font-space-grotesk)] text-slate-100">
-              Encore
-            </span>
-          </div>
-
-          <nav className="flex flex-col gap-1 flex-1">
-            {NAV_ITEMS.map((item) => (
-              <DesktopNavLink key={item.key} item={item} />
-            ))}
-          </nav>
-
-          <div className="border-t border-[#2a3140] pt-[14px] flex flex-col gap-3">
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-[10px] px-3 py-[9px] rounded-[11px] border border-[#2a3140] bg-transparent text-[#6b7785] text-[13px] font-[550] hover:text-slate-200 transition-colors"
-            >
-              <span>{theme === "dark" ? "☀️" : "🌙"}</span>
-              <span>{theme === "dark" ? "Claro" : "Oscuro"}</span>
-            </button>
-            <button
-              onClick={() => {
-                clearAuth();
-                signOut({ callbackUrl: "/es" });
-              }}
-              className="flex items-center gap-[10px] px-3 py-[9px] rounded-[11px] border border-[#2a3140] bg-transparent text-[#6b7785] text-[13px] font-[550] hover:text-red-400 transition-colors"
-            >
-              <span>←</span>
-              <span>{t("nav.logout")}</span>
-            </button>
-          </div>
-        </aside>
-      )}
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {!isDesktop && (
-          <header className="flex-shrink-0 flex items-center justify-between px-[18px] pt-[14px] pb-3 bg-slate-950 border-b border-slate-800/30">
-            <div className="flex items-center gap-[9px]">
-              <div className="w-[30px] h-[30px] rounded-[9px] bg-brand-500 flex items-center justify-center text-white font-bold text-[17px] font-[family-name:var(--font-space-grotesk)]">
+    <>
+      <div className="flex h-screen overflow-hidden">
+        {isDesktop && (
+          <aside className="w-[248px] flex-shrink-0 flex flex-col bg-[#161b22] border-r border-[#2a3140] px-4 pt-[22px] pb-4" style={{ background: "var(--ec-surface, #161b22)", borderColor: "var(--ec-border, #2a3140)" }}>
+            <div className="flex items-center gap-[10px] px-2 pb-[22px]">
+              <div className="w-[34px] h-[34px] rounded-[10px] bg-brand-500 flex items-center justify-center text-white font-bold text-[19px] font-[family-name:var(--font-space-grotesk)]">
                 E
               </div>
-              <span className="text-[19px] font-bold tracking-[-0.5px] font-[family-name:var(--font-space-grotesk)] text-slate-100">
+              <span className="text-[21px] font-bold tracking-[-0.5px] font-[family-name:var(--font-space-grotesk)] text-slate-100" style={{ color: "var(--ec-text, #e6edf3)" }}>
                 Encore
               </span>
             </div>
-            <button
-              onClick={toggleTheme}
-              className="w-[34px] h-[34px] rounded-[10px] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors"
-              aria-label={theme === "dark" ? "Cambiar a claro" : "Cambiar a oscuro"}
-            >
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
-          </header>
+
+            <nav className="flex flex-col gap-1 flex-1">
+              {NAV_ITEMS.map((item) => (
+                <DesktopNavLink key={item.key} item={item} />
+              ))}
+            </nav>
+
+            <div className="border-t border-[#2a3140] pt-[14px] flex flex-col gap-3" style={{ borderColor: "var(--ec-border, #2a3140)" }}>
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.7px] text-[#6b7785] mb-[8px] pl-1" style={{ color: "var(--ec-muted, #6b7785)" }}>Dirección visual</div>
+                <div className="flex gap-2">
+                  <ThemeSwatch t="midnight" label="Medianoche" />
+                  <ThemeSwatch t="stage" label="Escenario" />
+                  <ThemeSwatch t="daylight" label="Luz" />
+                </div>
+              </div>
+              <button
+                onClick={toggleNotes}
+                className="flex items-center gap-[10px] px-3 py-[9px] rounded-[11px] border border-[#2a3140] bg-transparent text-[#6b7785] text-[13px] font-[550] hover:text-slate-200 transition-colors"
+                style={{
+                  borderColor: notesOpen ? "var(--ec-accent, #ff922b)" : "var(--ec-border, #2a3140)",
+                  background: notesOpen ? "var(--ec-accent, #ff922b)" : "transparent",
+                  color: notesOpen ? "var(--ec-on-accent, #1a0f00)" : "var(--ec-muted, #6b7785)",
+                }}
+              >
+                <NotasIcon />
+                <span>Notas de diseño</span>
+              </button>
+              <button
+                onClick={() => {
+                  clearAuth();
+                  signOut({ callbackUrl: "/es" });
+                }}
+                className="flex items-center gap-[10px] px-3 py-[9px] rounded-[11px] border border-[#2a3140] bg-transparent text-[#6b7785] text-[13px] font-[550] hover:text-red-400 transition-colors"
+              >
+                <span>←</span>
+                <span>{t("nav.logout")}</span>
+              </button>
+            </div>
+          </aside>
         )}
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {!isDesktop && (
+            <header className="flex-shrink-0 flex items-center justify-between px-[18px] pt-[14px] pb-3 border-b border-slate-800/30" style={{ background: "var(--ec-bg, #0d1117)", borderColor: "var(--ec-border-soft, rgba(120,130,150,.12))" }}>
+              <div className="flex items-center gap-[9px]">
+                <div className="w-[30px] h-[30px] rounded-[9px] bg-brand-500 flex items-center justify-center text-white font-bold text-[17px] font-[family-name:var(--font-space-grotesk)]">
+                  E
+                </div>
+                <span className="text-[19px] font-bold tracking-[-0.5px] font-[family-name:var(--font-space-grotesk)]" style={{ color: "var(--ec-text, #e6edf3)" }}>
+                  Encore
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setTheme("midnight")} title="Medianoche" className="w-[22px] h-[22px] rounded-[7px] cursor-pointer" style={{ background: "linear-gradient(135deg, #0d1117, #5c7cfa)", border: theme === "midnight" ? "2px solid var(--ec-text, #e6edf3)" : "2px solid transparent" }} />
+                <button onClick={() => setTheme("stage")} title="Escenario" className="w-[22px] h-[22px] rounded-[7px] cursor-pointer" style={{ background: "linear-gradient(135deg, #0a0a0e, #ff922b)", border: theme === "stage" ? "2px solid var(--ec-text, #e6edf3)" : "2px solid transparent" }} />
+                <button onClick={() => setTheme("daylight")} title="Luz" className="w-[22px] h-[22px] rounded-[7px] cursor-pointer" style={{ background: "linear-gradient(135deg, #eef1f5, #4c6ef5)", border: theme === "daylight" ? "2px solid var(--ec-text, #e6edf3)" : "2px solid transparent" }} />
+                <button
+                  onClick={toggleNotes}
+                  title="Notas de diseño"
+                  className="w-[34px] h-[34px] ml-1 rounded-[10px] flex items-center justify-center cursor-pointer"
+                  style={{
+                    border: `1px solid ${notesOpen ? "var(--ec-accent, #ff922b)" : "var(--ec-border, #2a3140)"}`,
+                    background: notesOpen ? "var(--ec-accent, #ff922b)" : "transparent",
+                    color: notesOpen ? "var(--ec-on-accent, #1a0f00)" : "var(--ec-sub, #9aa7b5)",
+                  }}
+                >
+                  <NotasIcon />
+                </button>
+              </div>
+            </header>
+          )}
 
-        {!isDesktop && (
-          <nav className="flex-shrink-0 flex items-center justify-around px-2 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] bg-[#161b22] border-t border-[#2a3140]">
-            {NAV_ITEMS.map((item) => (
-              <MobileTab key={item.key} item={item} />
-            ))}
-          </nav>
-        )}
+          <main className="flex-1 overflow-y-auto">{children}</main>
+
+          {!isDesktop && (
+            <nav className="flex-shrink-0 flex items-center justify-around px-2 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] bg-[#161b22] border-t border-[#2a3140]" style={{ background: "var(--ec-surface, #161b22)", borderColor: "var(--ec-border, #2a3140)" }}>
+              {NAV_ITEMS.map((item) => (
+                <MobileTab key={item.key} item={item} />
+              ))}
+            </nav>
+          )}
+        </div>
       </div>
-    </div>
+
+      {notesOpen && <DesignNotes onClose={toggleNotes} />}
+    </>
   );
 }

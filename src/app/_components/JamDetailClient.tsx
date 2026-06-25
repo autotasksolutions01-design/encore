@@ -233,6 +233,12 @@ function RespondStickyBar({
 }) {
   const [response, setResponse] = useState<JamResponseType | null>(currentResponse);
   const [sending, setSending] = useState(false);
+  const [celebrateText, setCelebrateText] = useState<string | null>(null);
+
+  const showCelebrate = (text: string) => {
+    setCelebrateText(text);
+    setTimeout(() => setCelebrateText(null), 1700);
+  };
 
   const handleRespond = async (type: JamResponseType) => {
     if (sending) return;
@@ -249,6 +255,7 @@ function RespondStickyBar({
         return;
       }
       setResponse(type);
+      showCelebrate(type === "going" ? "¡Avisamos que vas! 🎶" : 'Guardado como "me interesa"');
     } catch (err) {
       console.error("Failed to respond:", err);
     } finally {
@@ -260,91 +267,102 @@ function RespondStickyBar({
   const goActive = response === "going";
 
   return (
-    <div
-      className="sticky bottom-0 -mx-4 px-4 pt-[13px] pb-[6px] z-10"
-      style={{
-        background: "linear-gradient(to top, #0d1117 70%, transparent)",
-      }}
-    >
-      {isAuthenticated && canRespond ? (
-        <div className="flex gap-[10px]">
-          <button
-            onClick={() => handleRespond("interested")}
-            disabled={sending}
-            aria-pressed={intActive}
-            aria-label="Me interesa"
-            className={cn(
-              "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold transition-colors",
-              intActive
-                ? "bg-slate-600 text-white border border-slate-500"
-                : "bg-transparent text-slate-300 border border-slate-700 hover:border-slate-600",
-              sending && "opacity-50 cursor-not-allowed",
-            )}
-          >
-            Me interesa
-          </button>
-          <button
-            onClick={() => handleRespond("going")}
-            disabled={sending}
-            aria-pressed={goActive}
-            aria-label="Voy"
-            className={cn(
-              "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold transition-colors",
-              goActive
-                ? "bg-brand-600 text-white"
-                : "bg-brand-500 text-white hover:bg-brand-600",
-              sending && "opacity-50 cursor-not-allowed",
-            )}
-            style={
-              !goActive
-                ? { boxShadow: "0 6px 18px rgba(92, 124, 250, 0.35)" }
-                : undefined
-            }
-          >
-            Voy
-          </button>
+    <>
+      <div
+        className="sticky bottom-0 -mx-4 px-4 pt-[13px] pb-[6px] z-10"
+        style={{
+          background: "linear-gradient(to top, #0d1117 70%, transparent)",
+        }}
+      >
+        {isAuthenticated && canRespond ? (
+          <div className="flex gap-[10px]">
+            <button
+              onClick={() => handleRespond("interested")}
+              disabled={sending}
+              aria-pressed={intActive}
+              aria-label="Me interesa"
+              className={cn(
+                "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold transition-colors",
+                intActive
+                  ? "bg-slate-600 text-white border border-slate-500"
+                  : "bg-transparent text-slate-300 border border-slate-700 hover:border-slate-600",
+                sending && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              Me interesa
+            </button>
+            <button
+              onClick={() => handleRespond("going")}
+              disabled={sending}
+              aria-pressed={goActive}
+              aria-label="Voy"
+              className={cn(
+                "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold transition-colors",
+                goActive
+                  ? "bg-brand-600 text-white"
+                  : "bg-brand-500 text-white hover:bg-brand-600",
+                sending && "opacity-50 cursor-not-allowed",
+              )}
+              style={
+                !goActive
+                  ? { boxShadow: "0 6px 18px rgba(92, 124, 250, 0.35)" }
+                  : undefined
+              }
+            >
+              Voy
+            </button>
+          </div>
+        ) : response ? (
+          <div className="flex gap-[10px]">
+            <button
+              disabled
+              aria-pressed={intActive}
+              aria-label="Me interesa"
+              className={cn(
+                "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold",
+                intActive
+                  ? "bg-slate-600 text-white border border-slate-500"
+                  : "bg-transparent text-slate-600 border border-slate-800",
+                "cursor-default",
+              )}
+            >
+              Me interesa
+            </button>
+            <button
+              disabled
+              aria-pressed={goActive}
+              aria-label="Voy"
+              className={cn(
+                "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold",
+                goActive
+                  ? "bg-brand-600 text-white"
+                  : "bg-slate-800 text-slate-600",
+                "cursor-default",
+              )}
+            >
+              Voy
+            </button>
+          </div>
+        ) : !isAuthenticated ? (
+          <p className="text-center text-[13px] text-slate-500 py-[10px]">
+            Iniciá sesión para responder
+          </p>
+        ) : isExpired ? (
+          <p className="text-center text-[13px] text-slate-500 py-[10px]">
+            Esta jam ya no acepta respuestas
+          </p>
+        ) : null}
+      </div>
+
+      {celebrateText && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-[96px] z-40 flex items-center gap-[10px] px-[18px] py-[12px] rounded-[14px] bg-[#34d399] text-[#04130d] text-[14px] font-semibold shadow-lg" style={{ boxShadow: "0 12px 34px rgba(0,0,0,.4)" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          {celebrateText}
         </div>
-      ) : response ? (
-        <div className="flex gap-[10px]">
-          <button
-            disabled
-            aria-pressed={intActive}
-            aria-label="Me interesa"
-            className={cn(
-              "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold",
-              intActive
-                ? "bg-slate-600 text-white border border-slate-500"
-                : "bg-transparent text-slate-600 border border-slate-800",
-              "cursor-default",
-            )}
-          >
-            Me interesa
-          </button>
-          <button
-            disabled
-            aria-pressed={goActive}
-            aria-label="Voy"
-            className={cn(
-              "flex-1 py-[14px] rounded-[14px] text-[14.5px] font-semibold",
-              goActive
-                ? "bg-brand-600 text-white"
-                : "bg-slate-800 text-slate-600",
-              "cursor-default",
-            )}
-          >
-            Voy
-          </button>
-        </div>
-      ) : !isAuthenticated ? (
-        <p className="text-center text-[13px] text-slate-500 py-[10px]">
-          Iniciá sesión para responder
-        </p>
-      ) : isExpired ? (
-        <p className="text-center text-[13px] text-slate-500 py-[10px]">
-          Esta jam ya no acepta respuestas
-        </p>
-      ) : null}
-    </div>
+      )}
+    </>
   );
 }
 
