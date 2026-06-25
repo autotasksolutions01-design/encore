@@ -52,19 +52,25 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('encore-theme');
-                  if (!theme) {
-                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  if (theme === 'midnight' || theme === 'stage' || theme === 'daylight') {
+                    document.documentElement.classList.add(theme);
+                  } else if (theme === 'dark') {
+                    document.documentElement.classList.add('midnight');
+                  } else if (theme === 'light') {
+                    document.documentElement.classList.add('daylight');
+                  } else {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'midnight' : 'daylight';
+                    document.documentElement.classList.add(theme);
                   }
-                  document.documentElement.classList.add(theme);
                 } catch (e) {
-                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.add('midnight');
                 }
               })();
             `,
           }}
         />
       </head>
-      <body className="font-sans bg-slate-950 text-slate-100 antialiased min-h-screen">
+      <body className="font-sans antialiased min-h-screen" style={{ background: "var(--ec-bg, #0d1117)", color: "var(--ec-text, #e6edf3)" }}>
         <Providers>{children}</Providers>
       </body>
     </html>

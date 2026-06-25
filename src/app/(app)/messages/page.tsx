@@ -193,6 +193,13 @@ function MessagesContent() {
           ))}
         </div>
       )}
+
+      <div className="mt-6 p-4 rounded-[16px] border" style={{ background: "rgba(92,124,250,.1)", borderColor: "rgba(92,124,250,.25)" }}>
+        <div className="font-semibold text-[14px] mb-[5px]">Rompé el hielo con una plantilla</div>
+        <div className="text-[13px] text-[#9aa7b5] leading-[1.5]">
+          "Hola, vi que tocás jazz en Palermo — ¿te suma una jam el finde?" — el primer mensaje es el más difícil; bajamos esa barrera.
+        </div>
+      </div>
     </div>
   );
 }
