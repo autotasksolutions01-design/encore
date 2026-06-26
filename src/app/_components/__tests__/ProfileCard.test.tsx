@@ -135,6 +135,21 @@ describe("ProfileCard", () => {
     expect(screen.getByText("12.3 km")).toBeTruthy();
   });
 
+  it("does not render km text when distanceKm is undefined", () => {
+    render(<ProfileCard {...baseProps} />);
+    expect(screen.queryByText(/km/)).toBeNull();
+  });
+
+  it("rounds 0.05 to 0.1 km", () => {
+    render(<ProfileCard {...baseProps} distanceKm={0.05} />);
+    expect(screen.getByText("0.1 km")).toBeTruthy();
+  });
+
+  it("rounds 9.99 to 10.0 km", () => {
+    render(<ProfileCard {...baseProps} distanceKm={9.99} />);
+    expect(screen.getByText("10.0 km")).toBeTruthy();
+  });
+
   it("renders connect button with Conectar text", () => {
     render(<ProfileCard {...baseProps} />);
     expect(screen.getByText("Conectar")).toBeTruthy();
